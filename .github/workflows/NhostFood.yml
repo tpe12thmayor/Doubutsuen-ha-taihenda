@@ -1,0 +1,30 @@
+name: Fetch food every 6h6m (Nhost)
+
+on:
+  schedule:
+    - cron: "6 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  fetch_food:
+    runs-on: ubuntu-latest
+
+    env:
+      NHOST_GRAPHQL_URL: ${{ secrets.NHOST_GRAPHQL_URL }}
+      NHOST_ADMIN_SECRET: ${{ secrets.NHOST_ADMIN_SECRET }}
+
+    steps:
+      - name: Check env loaded
+        run: |
+          echo "URL set? ${NHOST_GRAPHQL_URL:+yes}"
+          echo "SECRET set? ${NHOST_ADMIN_SECRET:+yes}"
+
+      - name: Fetch food from Nhost GraphQL
+        run: |
+          set -x
+          curl -v -X POST "$NHOST_GRAPHQL_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-hasura-admin-secret: $NHOST_ADMIN_SECRET" \
+            -d '{
+              "query": "query { food { id name amount price shop to_date photo photohash } }"
+            }'
