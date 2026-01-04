@@ -1,0 +1,28 @@
+name: Fetch Subscription Every 6h26m
+
+on:
+  schedule:
+    - cron: "26 */6 * * *"  # 每 6 小時 26 分鐘執行一次 (UTC)
+  workflow_dispatch:        # 可手動觸發
+
+jobs:
+  fetch_subscription:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch subscription from Nhost GraphQL
+        run: |
+          set -x
+          curl -s -X POST "${{ secrets.NHOST_GRAPHQL_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "x-hasura-admin-secret: ${{ secrets.NHOST_ADMIN_SECRET }}" \
+            -d '{
+              "query": "query { subscription(order_by: { nextdate: asc }) { id name site price nextdate note account } }"
+            }' \
+            -o subscription.json
+
+      - name: Show fetched data
+        run: cat subscription.json
